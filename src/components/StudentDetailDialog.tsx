@@ -1,0 +1,110 @@
+
+import React from 'react';
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { X, User, Mail, Calendar, Trash2, Clock } from 'lucide-react';
+
+const StudentDetailDialog = ({ student, isOpen, onClose, onDelete }) => {
+  if (!isOpen || !student) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <Card className="w-full max-w-lg bg-white rounded-2xl shadow-2xl">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-2xl font-bold text-gray-800">Student Details</h3>
+            <Button
+              onClick={onClose}
+              className="bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full p-2"
+            >
+              <X className="w-5 h-5" />
+            </Button>
+          </div>
+
+          <div className="space-y-6">
+            {/* Passport Size Photo */}
+            <div className="text-center">
+              <div className="w-32 h-32 mx-auto mb-4">
+                {student.image && student.image !== '/placeholder.svg' ? (
+                  <img 
+                    src={student.image} 
+                    alt={student.name}
+                    className="w-32 h-32 rounded-2xl object-cover border-4 border-purple-200 shadow-lg"
+                  />
+                ) : (
+                  <div className="w-32 h-32 bg-gradient-to-br from-purple-400 to-pink-400 rounded-2xl flex items-center justify-center text-white font-bold text-4xl shadow-lg">
+                    {student.name.charAt(0)}
+                  </div>
+                )}
+              </div>
+              <h4 className="text-xl font-bold text-gray-800">{student.name}</h4>
+              <p className="text-gray-600">{student.grade}</p>
+            </div>
+
+            {/* Student Information */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
+                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                  <User className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Student Name</p>
+                  <p className="font-semibold text-gray-800">{student.name}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
+                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                  <Mail className="w-5 h-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Email Address</p>
+                  <p className="font-semibold text-gray-800">{student.email}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
+                <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                  <Calendar className="w-5 h-5 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Grade</p>
+                  <p className="font-semibold text-gray-800">{student.grade}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
+                <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                  <Clock className="w-5 h-5 text-orange-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Last Seen</p>
+                  <p className="font-semibold text-gray-800">{student.lastSeen}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 pt-4 border-t border-gray-200">
+              <Button
+                onClick={onClose}
+                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-3 rounded-xl"
+              >
+                Close
+              </Button>
+              <Button
+                onClick={() => onDelete(student.id, student.name)}
+                className="bg-red-500 hover:bg-red-600 text-white font-semibold px-6 py-3 rounded-xl flex items-center gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+};
+
+export default StudentDetailDialog;

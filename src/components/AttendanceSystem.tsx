@@ -10,9 +10,81 @@ import StudentDatabase from './StudentDatabase';
 const AttendanceSystem = () => {
   const [activeTab, setActiveTab] = useState('recognition');
   const [attendanceRecords, setAttendanceRecords] = useState([]);
+  const [students, setStudents] = useState(() => {
+    const saved = localStorage.getItem('students');
+    return saved ? JSON.parse(saved) : [
+      { 
+        id: 1, 
+        name: 'Alice Johnson', 
+        email: 'alice.johnson@school.edu',
+        grade: '10th Grade',
+        image: '/placeholder.svg',
+        lastSeen: '2024-06-01 09:15:00'
+      },
+      { 
+        id: 2, 
+        name: 'Bob Smith', 
+        email: 'bob.smith@school.edu',
+        grade: '10th Grade',
+        image: '/placeholder.svg',
+        lastSeen: '2024-06-01 09:12:00'
+      },
+      { 
+        id: 3, 
+        name: 'Carol Davis', 
+        email: 'carol.davis@school.edu',
+        grade: '10th Grade',
+        image: '/placeholder.svg',
+        lastSeen: '2024-05-31 14:30:00'
+      },
+      { 
+        id: 4, 
+        name: 'David Wilson', 
+        email: 'david.wilson@school.edu',
+        grade: '10th Grade',
+        image: '/placeholder.svg',
+        lastSeen: '2024-06-01 08:45:00'
+      },
+      { 
+        id: 5, 
+        name: 'Emma Brown', 
+        email: 'emma.brown@school.edu',
+        grade: '10th Grade',
+        image: '/placeholder.svg',
+        lastSeen: 'Never'
+      },
+    ];
+  });
 
   const addAttendanceRecord = (record) => {
     setAttendanceRecords(prev => [record, ...prev]);
+  };
+
+  const addStudent = (student) => {
+    const newStudent = {
+      ...student,
+      id: Date.now(),
+      lastSeen: 'Never'
+    };
+    const updatedStudents = [...students, newStudent];
+    setStudents(updatedStudents);
+    localStorage.setItem('students', JSON.stringify(updatedStudents));
+  };
+
+  const deleteStudent = (studentId) => {
+    const updatedStudents = students.filter(student => student.id !== studentId);
+    setStudents(updatedStudents);
+    localStorage.setItem('students', JSON.stringify(updatedStudents));
+  };
+
+  const updateStudentLastSeen = (studentId) => {
+    const updatedStudents = students.map(student => 
+      student.id === studentId 
+        ? { ...student, lastSeen: new Date().toLocaleString() }
+        : student
+    );
+    setStudents(updatedStudents);
+    localStorage.setItem('students', JSON.stringify(updatedStudents));
   };
 
   return (
@@ -21,10 +93,10 @@ const AttendanceSystem = () => {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-5xl font-bold text-white mb-4 drop-shadow-lg">
-            🤖 Smart Attendance AI
+            👓 Smart Glass Monitor
           </h1>
           <p className="text-xl text-white/90 drop-shadow-md">
-            Friendly face recognition for student attendance
+            Advanced face recognition for intelligent attendance tracking
           </p>
         </div>
 
@@ -70,13 +142,21 @@ const AttendanceSystem = () => {
         {/* Content */}
         <div className="transition-all duration-500">
           {activeTab === 'recognition' && (
-            <FaceRecognition onAttendanceRecord={addAttendanceRecord} />
+            <FaceRecognition 
+              onAttendanceRecord={addAttendanceRecord} 
+              students={students}
+              onUpdateStudentLastSeen={updateStudentLastSeen}
+            />
           )}
           {activeTab === 'dashboard' && (
             <AttendanceDashboard records={attendanceRecords} />
           )}
           {activeTab === 'students' && (
-            <StudentDatabase />
+            <StudentDatabase 
+              students={students}
+              onAddStudent={addStudent}
+              onDeleteStudent={deleteStudent}
+            />
           )}
         </div>
       </div>
