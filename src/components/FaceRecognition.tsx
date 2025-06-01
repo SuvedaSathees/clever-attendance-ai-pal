@@ -42,31 +42,39 @@ const FaceRecognition = ({ onAttendanceRecord, students, onUpdateStudentLastSeen
   const captureAndAnalyzeFrame = () => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    if (!video || !canvas) return null;
+    if (!video || !canvas) return false;
 
     const ctx = canvas.getContext('2d');
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     ctx.drawImage(video, 0, 0);
 
-    // Simple blur detection using canvas
+    // Enhanced blur detection using edge detection
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const data = imageData.data;
     
-    // Calculate variance to detect blur (simplified approach)
+    // Calculate Laplacian variance for blur detection
     let sum = 0;
-    let sumSquared = 0;
-    for (let i = 0; i < data.length; i += 4) {
-      const brightness = (data[i] + data[i + 1] + data[i + 2]) / 3;
-      sum += brightness;
-      sumSquared += brightness * brightness;
+    const width = canvas.width;
+    const height = canvas.height;
+    
+    for (let y = 1; y < height - 1; y++) {
+      for (let x = 1; x < width - 1; x++) {
+        const idx = (y * width + x) * 4;
+        const current = data[idx];
+        const right = data[idx + 4];
+        const down = data[(y + 1) * width * 4 + x * 4];
+        
+        const laplacian = Math.abs(4 * current - right - down - data[idx - 4] - data[(y - 1) * width * 4 + x * 4]);
+        sum += laplacian;
+      }
     }
     
-    const mean = sum / (data.length / 4);
-    const variance = (sumSquared / (data.length / 4)) - (mean * mean);
+    const variance = sum / ((width - 2) * (height - 2));
+    console.log('Image clarity variance:', variance);
     
-    // If variance is too low, image is likely blurred
-    return variance > 1000; // Threshold for blur detection
+    // Higher threshold for better clarity detection
+    return variance > 15;
   };
 
   const simulateFaceRecognition = () => {
@@ -82,7 +90,7 @@ const FaceRecognition = ({ onAttendanceRecord, students, onUpdateStudentLastSeen
           student: null,
           timestamp: new Date().toISOString(),
           status: 'Image Not Clear',
-          message: 'Image is blurred or not clear. Please try again.'
+          message: 'Image is blurred or not clear. Please ensure good lighting and hold still.'
         };
         
         setScanResult(result);
@@ -96,11 +104,28 @@ const FaceRecognition = ({ onAttendanceRecord, students, onUpdateStudentLastSeen
         return;
       }
 
-      // Simulate face recognition (70% success rate for demo)
-      const isRecognized = Math.random() > 0.3;
-      const recognizedStudent = isRecognized 
-        ? students[Math.floor(Math.random() * students.length)]
-        : null;
+      // Filter students with actual images (not placeholder)
+      const studentsWithImages = students.filter(student => 
+        student.image && student.image !== '/placeholder.svg'
+      );
+
+      // Simulate face recognition with higher accuracy for students with uploaded images
+      let recognizedStudent = null;
+      let isRecognized = false;
+
+      if (studentsWithImages.length > 0) {
+        // 80% chance to recognize if there are students with uploaded images
+        isRecognized = Math.random() > 0.2;
+        if (isRecognized) {
+          recognizedStudent = studentsWithImages[Math.floor(Math.random() * studentsWithImages.length)];
+        }
+      } else {
+        // 50% chance to recognize from placeholder students
+        isRecognized = Math.random() > 0.5;
+        if (isRecognized) {
+          recognizedStudent = students[Math.floor(Math.random() * students.length)];
+        }
+      }
 
       const result = {
         recognized: isRecognized,
@@ -108,8 +133,8 @@ const FaceRecognition = ({ onAttendanceRecord, students, onUpdateStudentLastSeen
         timestamp: new Date().toISOString(),
         status: isRecognized ? 'Present' : 'Not Found',
         message: isRecognized 
-          ? `Welcome ${recognizedStudent.name}! Your attendance is marked at ${new Date().toLocaleTimeString()}`
-          : 'Face not found in student database. Please contact administrator.'
+          ? `${recognizedStudent.name} is present! Your attendance is marked at ${new Date().toLocaleTimeString()}`
+          : 'Face not recognized in student database. Please contact administrator or try again.'
       };
 
       setScanResult(result);
@@ -188,6 +213,9 @@ const FaceRecognition = ({ onAttendanceRecord, students, onUpdateStudentLastSeen
                     <div className="absolute inset-0 border-2 border-purple-400 rounded-2xl pointer-events-none">
                       <div className="absolute top-1/3 left-1/4 w-8 h-8 border-2 border-green-400 rounded-full animate-pulse"></div>
                       <div className="absolute top-1/3 right-1/4 w-8 h-8 border-2 border-green-400 rounded-full animate-pulse"></div>
+                      
+                      {/* Face detection frame */}
+                      <div className="absolute top-1/4 left-1/4 w-1/2 h-1/2 border-2 border-blue-400 rounded-lg"></div>
                     </div>
                     
                     {isScanning && (

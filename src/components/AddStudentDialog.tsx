@@ -18,7 +18,7 @@ const AddStudentDialog = ({ isOpen, onClose, onAddStudent }) => {
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        const result = e.target.result;
+        const result = e.target.result as string;
         setImagePreview(result);
         setFormData(prev => ({ ...prev, image: result }));
       };

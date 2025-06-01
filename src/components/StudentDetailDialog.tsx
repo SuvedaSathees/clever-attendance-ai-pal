@@ -1,10 +1,50 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X, User, Mail, Calendar, Trash2, Clock } from 'lucide-react';
+import { X, User, Mail, Calendar, Trash2, Clock, Edit } from 'lucide-react';
 
-const StudentDetailDialog = ({ student, isOpen, onClose, onDelete }) => {
+const StudentDetailDialog = ({ student, isOpen, onClose, onDelete, onEdit }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editData, setEditData] = useState({
+    name: '',
+    email: '',
+    grade: ''
+  });
+
+  React.useEffect(() => {
+    if (student && isOpen) {
+      setEditData({
+        name: student.name,
+        email: student.email,
+        grade: student.grade
+      });
+    }
+  }, [student, isOpen]);
+
+  const handleEdit = () => {
+    setIsEditing(true);
+  };
+
+  const handleSaveEdit = () => {
+    if (!editData.name || !editData.email) {
+      alert('Please fill in all required fields');
+      return;
+    }
+    
+    onEdit(student.id, editData);
+    setIsEditing(false);
+  };
+
+  const handleCancelEdit = () => {
+    setEditData({
+      name: student.name,
+      email: student.email,
+      grade: student.grade
+    });
+    setIsEditing(false);
+  };
+
   if (!isOpen || !student) return null;
 
   return (
@@ -47,9 +87,18 @@ const StudentDetailDialog = ({ student, isOpen, onClose, onDelete }) => {
                 <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
                   <User className="w-5 h-5 text-blue-600" />
                 </div>
-                <div>
+                <div className="flex-1">
                   <p className="text-sm text-gray-600">Student Name</p>
-                  <p className="font-semibold text-gray-800">{student.name}</p>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editData.name}
+                      onChange={(e) => setEditData(prev => ({ ...prev, name: e.target.value }))}
+                      className="font-semibold text-gray-800 bg-white border border-gray-300 rounded px-2 py-1 w-full"
+                    />
+                  ) : (
+                    <p className="font-semibold text-gray-800">{student.name}</p>
+                  )}
                 </div>
               </div>
 
@@ -57,9 +106,18 @@ const StudentDetailDialog = ({ student, isOpen, onClose, onDelete }) => {
                 <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
                   <Mail className="w-5 h-5 text-green-600" />
                 </div>
-                <div>
+                <div className="flex-1">
                   <p className="text-sm text-gray-600">Email Address</p>
-                  <p className="font-semibold text-gray-800">{student.email}</p>
+                  {isEditing ? (
+                    <input
+                      type="email"
+                      value={editData.email}
+                      onChange={(e) => setEditData(prev => ({ ...prev, email: e.target.value }))}
+                      className="font-semibold text-gray-800 bg-white border border-gray-300 rounded px-2 py-1 w-full"
+                    />
+                  ) : (
+                    <p className="font-semibold text-gray-800">{student.email}</p>
+                  )}
                 </div>
               </div>
 
@@ -67,9 +125,22 @@ const StudentDetailDialog = ({ student, isOpen, onClose, onDelete }) => {
                 <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
                   <Calendar className="w-5 h-5 text-purple-600" />
                 </div>
-                <div>
+                <div className="flex-1">
                   <p className="text-sm text-gray-600">Grade</p>
-                  <p className="font-semibold text-gray-800">{student.grade}</p>
+                  {isEditing ? (
+                    <select
+                      value={editData.grade}
+                      onChange={(e) => setEditData(prev => ({ ...prev, grade: e.target.value }))}
+                      className="font-semibold text-gray-800 bg-white border border-gray-300 rounded px-2 py-1 w-full"
+                    >
+                      <option value="9th Grade">9th Grade</option>
+                      <option value="10th Grade">10th Grade</option>
+                      <option value="11th Grade">11th Grade</option>
+                      <option value="12th Grade">12th Grade</option>
+                    </select>
+                  ) : (
+                    <p className="font-semibold text-gray-800">{student.grade}</p>
+                  )}
                 </div>
               </div>
 
@@ -86,19 +157,45 @@ const StudentDetailDialog = ({ student, isOpen, onClose, onDelete }) => {
 
             {/* Action Buttons */}
             <div className="flex gap-3 pt-4 border-t border-gray-200">
-              <Button
-                onClick={onClose}
-                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-3 rounded-xl"
-              >
-                Close
-              </Button>
-              <Button
-                onClick={() => onDelete(student.id, student.name)}
-                className="bg-red-500 hover:bg-red-600 text-white font-semibold px-6 py-3 rounded-xl flex items-center gap-2"
-              >
-                <Trash2 className="w-4 h-4" />
-                Delete
-              </Button>
+              {isEditing ? (
+                <>
+                  <Button
+                    onClick={handleCancelEdit}
+                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-3 rounded-xl"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleSaveEdit}
+                    className="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold py-3 rounded-xl"
+                  >
+                    Save
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    onClick={onClose}
+                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-3 rounded-xl"
+                  >
+                    Close
+                  </Button>
+                  <Button
+                    onClick={handleEdit}
+                    className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-xl flex items-center gap-2"
+                  >
+                    <Edit className="w-4 h-4" />
+                    Edit
+                  </Button>
+                  <Button
+                    onClick={() => onDelete(student.id, student.name)}
+                    className="bg-red-500 hover:bg-red-600 text-white font-semibold px-6 py-3 rounded-xl flex items-center gap-2"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>

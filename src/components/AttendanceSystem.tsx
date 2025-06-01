@@ -15,40 +15,40 @@ const AttendanceSystem = () => {
     return saved ? JSON.parse(saved) : [
       { 
         id: 1, 
-        name: 'Alice Johnson', 
-        email: 'alice.johnson@school.edu',
+        name: 'Shweta Sharma', 
+        email: 'shweta.sharma@school.edu',
         grade: '10th Grade',
         image: '/placeholder.svg',
         lastSeen: '2024-06-01 09:15:00'
       },
       { 
         id: 2, 
-        name: 'Bob Smith', 
-        email: 'bob.smith@school.edu',
+        name: 'Maha Khan', 
+        email: 'maha.khan@school.edu',
         grade: '10th Grade',
         image: '/placeholder.svg',
         lastSeen: '2024-06-01 09:12:00'
       },
       { 
         id: 3, 
-        name: 'Carol Davis', 
-        email: 'carol.davis@school.edu',
+        name: 'Priya Patel', 
+        email: 'priya.patel@school.edu',
         grade: '10th Grade',
         image: '/placeholder.svg',
         lastSeen: '2024-05-31 14:30:00'
       },
       { 
         id: 4, 
-        name: 'David Wilson', 
-        email: 'david.wilson@school.edu',
+        name: 'Arjun Singh', 
+        email: 'arjun.singh@school.edu',
         grade: '10th Grade',
         image: '/placeholder.svg',
         lastSeen: '2024-06-01 08:45:00'
       },
       { 
         id: 5, 
-        name: 'Emma Brown', 
-        email: 'emma.brown@school.edu',
+        name: 'Kavya Reddy', 
+        email: 'kavya.reddy@school.edu',
         grade: '10th Grade',
         image: '/placeholder.svg',
         lastSeen: 'Never'
@@ -73,6 +73,16 @@ const AttendanceSystem = () => {
 
   const deleteStudent = (studentId) => {
     const updatedStudents = students.filter(student => student.id !== studentId);
+    setStudents(updatedStudents);
+    localStorage.setItem('students', JSON.stringify(updatedStudents));
+  };
+
+  const editStudent = (studentId, editData) => {
+    const updatedStudents = students.map(student => 
+      student.id === studentId 
+        ? { ...student, ...editData }
+        : student
+    );
     setStudents(updatedStudents);
     localStorage.setItem('students', JSON.stringify(updatedStudents));
   };
@@ -156,6 +166,7 @@ const AttendanceSystem = () => {
               students={students}
               onAddStudent={addStudent}
               onDeleteStudent={deleteStudent}
+              onEditStudent={editStudent}
             />
           )}
         </div>

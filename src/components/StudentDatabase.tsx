@@ -6,7 +6,7 @@ import { User, Users, Plus, Trash2, Eye, Mail, Calendar } from 'lucide-react';
 import AddStudentDialog from './AddStudentDialog';
 import StudentDetailDialog from './StudentDetailDialog';
 
-const StudentDatabase = ({ students, onAddStudent, onDeleteStudent }) => {
+const StudentDatabase = ({ students, onAddStudent, onDeleteStudent, onEditStudent }) => {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
 
@@ -16,13 +16,9 @@ const StudentDatabase = ({ students, onAddStudent, onDeleteStudent }) => {
     }
   };
 
-  // Create a 3x3 grid with empty slots
-  const gridSlots = Array(9).fill(null);
-  students.forEach((student, index) => {
-    if (index < 9) {
-      gridSlots[index] = student;
-    }
-  });
+  const handleEditStudent = (studentId, editData) => {
+    onEditStudent(studentId, editData);
+  };
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -46,16 +42,26 @@ const StudentDatabase = ({ students, onAddStudent, onDeleteStudent }) => {
               Add Student
             </Button>
           </div>
-          <div className="mt-4 text-sm text-gray-500">
-            Total Students: {students.length}/9
-          </div>
         </div>
 
         <div className="p-6">
-          <div className="grid grid-cols-3 gap-6">
-            {gridSlots.map((student, index) => (
-              <div key={index} className="aspect-square">
-                {student ? (
+          {students.length === 0 ? (
+            <div className="text-center py-12">
+              <User className="w-24 h-24 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-500 mb-2">No Students Added</h3>
+              <p className="text-gray-400 mb-6">Add your first student to start using face recognition</p>
+              <Button
+                onClick={() => setShowAddDialog(true)}
+                className="bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-3 rounded-xl"
+              >
+                <Plus className="w-5 h-5 mr-2" />
+                Add First Student
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-6">
+              {students.map((student) => (
+                <div key={student.id} className="aspect-square">
                   <Card className="h-full border border-gray-200 rounded-xl hover:shadow-lg transition-all duration-300 relative group">
                     <div className="p-4 h-full flex flex-col">
                       {/* Student Avatar */}
@@ -100,17 +106,10 @@ const StudentDatabase = ({ students, onAddStudent, onDeleteStudent }) => {
                       </div>
                     </div>
                   </Card>
-                ) : (
-                  <Card className="h-full border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center hover:border-gray-400 transition-colors">
-                    <div className="text-center text-gray-400">
-                      <User className="w-12 h-12 mx-auto mb-2" />
-                      <p className="text-sm">Empty Slot</p>
-                    </div>
-                  </Card>
-                )}
-              </div>
-            ))}
-          </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </Card>
 
@@ -126,6 +125,7 @@ const StudentDatabase = ({ students, onAddStudent, onDeleteStudent }) => {
         student={selectedStudent}
         isOpen={!!selectedStudent}
         onClose={() => setSelectedStudent(null)}
+        onEdit={handleEditStudent}
         onDelete={(studentId, studentName) => {
           handleDeleteStudent(studentId, studentName);
           setSelectedStudent(null);
