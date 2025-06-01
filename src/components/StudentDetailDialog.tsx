@@ -2,14 +2,15 @@
 import React, { useState } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X, User, Mail, Calendar, Trash2, Clock, Edit } from 'lucide-react';
+import { X, User, Mail, Calendar, Trash2, Clock, Edit, Upload } from 'lucide-react';
 
 const StudentDetailDialog = ({ student, isOpen, onClose, onDelete, onEdit }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({
     name: '',
     email: '',
-    grade: ''
+    grade: '',
+    image: ''
   });
 
   React.useEffect(() => {
@@ -17,13 +18,25 @@ const StudentDetailDialog = ({ student, isOpen, onClose, onDelete, onEdit }) => 
       setEditData({
         name: student.name,
         email: student.email,
-        grade: student.grade
+        grade: student.grade,
+        image: student.image || ''
       });
     }
   }, [student, isOpen]);
 
   const handleEdit = () => {
     setIsEditing(true);
+  };
+
+  const handleImageUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setEditData(prev => ({ ...prev, image: e.target.result }));
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSaveEdit = () => {
@@ -40,7 +53,8 @@ const StudentDetailDialog = ({ student, isOpen, onClose, onDelete, onEdit }) => 
     setEditData({
       name: student.name,
       email: student.email,
-      grade: student.grade
+      grade: student.grade,
+      image: student.image || ''
     });
     setIsEditing(false);
   };
@@ -62,12 +76,12 @@ const StudentDetailDialog = ({ student, isOpen, onClose, onDelete, onEdit }) => 
           </div>
 
           <div className="space-y-6">
-            {/* Passport Size Photo */}
+            {/* Student Photo */}
             <div className="text-center">
               <div className="w-32 h-32 mx-auto mb-4">
-                {student.image && student.image !== '/placeholder.svg' ? (
+                {(isEditing ? editData.image : student.image) && (isEditing ? editData.image : student.image) !== '/placeholder.svg' ? (
                   <img 
-                    src={student.image} 
+                    src={isEditing ? editData.image : student.image}
                     alt={student.name}
                     className="w-32 h-32 rounded-2xl object-cover border-4 border-purple-200 shadow-lg"
                   />
@@ -77,8 +91,30 @@ const StudentDetailDialog = ({ student, isOpen, onClose, onDelete, onEdit }) => 
                   </div>
                 )}
               </div>
-              <h4 className="text-xl font-bold text-gray-800">{student.name}</h4>
-              <p className="text-gray-600">{student.grade}</p>
+              
+              {isEditing && (
+                <div className="mb-4">
+                  <label className="block">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                    <Button
+                      type="button"
+                      className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg cursor-pointer"
+                      onClick={() => document.querySelector('input[type="file"]').click()}
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      Upload New Photo
+                    </Button>
+                  </label>
+                </div>
+              )}
+              
+              <h4 className="text-xl font-bold text-gray-800">{isEditing ? editData.name : student.name}</h4>
+              <p className="text-gray-600">{isEditing ? editData.grade : student.grade}</p>
             </div>
 
             {/* Student Information */}

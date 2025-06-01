@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Camera, Eye } from 'lucide-react';
+import { Camera, Scan } from 'lucide-react';
 import AnimatedResponse from './AnimatedResponse';
 
 const FaceRecognition = ({ onAttendanceRecord, students, onUpdateStudentLastSeen }) => {
@@ -20,7 +20,7 @@ const FaceRecognition = ({ onAttendanceRecord, students, onUpdateStudentLastSeen
         video: { 
           width: 640, 
           height: 480,
-          facingMode: 'user' // Front camera
+          facingMode: 'user'
         } 
       });
       if (videoRef.current) {
@@ -42,18 +42,20 @@ const FaceRecognition = ({ onAttendanceRecord, students, onUpdateStudentLastSeen
   const captureAndAnalyzeFrame = () => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    if (!video || !canvas) return false;
+    if (!video || !canvas) return { isImageClear: false, capturedImage: null };
 
     const ctx = canvas.getContext('2d');
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     ctx.drawImage(video, 0, 0);
 
+    // Get captured image as data URL
+    const capturedImage = canvas.toDataURL('image/jpeg', 0.8);
+
     // Enhanced blur detection using edge detection
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const data = imageData.data;
     
-    // Calculate Laplacian variance for blur detection
     let sum = 0;
     const width = canvas.width;
     const height = canvas.height;
@@ -73,16 +75,18 @@ const FaceRecognition = ({ onAttendanceRecord, students, onUpdateStudentLastSeen
     const variance = sum / ((width - 2) * (height - 2));
     console.log('Image clarity variance:', variance);
     
-    // Higher threshold for better clarity detection
-    return variance > 15;
+    return {
+      isImageClear: variance > 15,
+      capturedImage: capturedImage
+    };
   };
 
   const simulateFaceRecognition = () => {
     setIsScanning(true);
     
     setTimeout(() => {
-      // Check image quality first
-      const isImageClear = captureAndAnalyzeFrame();
+      // Capture and analyze the frame
+      const { isImageClear, capturedImage } = captureAndAnalyzeFrame();
       
       if (!isImageClear) {
         const result = {
@@ -104,24 +108,23 @@ const FaceRecognition = ({ onAttendanceRecord, students, onUpdateStudentLastSeen
         return;
       }
 
-      // Filter students with actual images (not placeholder)
+      // Filter students with actual uploaded images
       const studentsWithImages = students.filter(student => 
         student.image && student.image !== '/placeholder.svg'
       );
 
-      // Simulate face recognition with higher accuracy for students with uploaded images
       let recognizedStudent = null;
       let isRecognized = false;
 
       if (studentsWithImages.length > 0) {
-        // 80% chance to recognize if there are students with uploaded images
-        isRecognized = Math.random() > 0.2;
+        // 85% chance to recognize if there are students with uploaded images
+        isRecognized = Math.random() > 0.15;
         if (isRecognized) {
           recognizedStudent = studentsWithImages[Math.floor(Math.random() * studentsWithImages.length)];
         }
       } else {
-        // 50% chance to recognize from placeholder students
-        isRecognized = Math.random() > 0.5;
+        // 60% chance to recognize from placeholder students
+        isRecognized = Math.random() > 0.4;
         if (isRecognized) {
           recognizedStudent = students[Math.floor(Math.random() * students.length)];
         }
@@ -133,8 +136,8 @@ const FaceRecognition = ({ onAttendanceRecord, students, onUpdateStudentLastSeen
         timestamp: new Date().toISOString(),
         status: isRecognized ? 'Present' : 'Not Found',
         message: isRecognized 
-          ? `${recognizedStudent.name} is present! Your attendance is marked at ${new Date().toLocaleTimeString()}`
-          : 'Face not recognized in student database. Please contact administrator or try again.'
+          ? `${recognizedStudent.name}, you are present!`
+          : 'Face not recognized in student database. Please try again.'
       };
 
       setScanResult(result);
@@ -171,11 +174,11 @@ const FaceRecognition = ({ onAttendanceRecord, students, onUpdateStudentLastSeen
         <div className="p-8">
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-gray-800 mb-2 flex items-center justify-center gap-3">
-              <Eye className="w-8 h-8 text-purple-600" />
-              Smart Glass Scanner
+              <Scan className="w-8 h-8 text-purple-600" />
+              Face Recognition Scanner
             </h2>
             <p className="text-gray-600">
-              Position your face in the camera frame for eye detection and recognition
+              Position your face in the camera frame for full face recognition
             </p>
           </div>
 
@@ -209,13 +212,14 @@ const FaceRecognition = ({ onAttendanceRecord, students, onUpdateStudentLastSeen
                       className="hidden"
                     />
                     
-                    {/* Eye detection overlay */}
+                    {/* Face detection frame overlay */}
                     <div className="absolute inset-0 border-2 border-purple-400 rounded-2xl pointer-events-none">
-                      <div className="absolute top-1/3 left-1/4 w-8 h-8 border-2 border-green-400 rounded-full animate-pulse"></div>
-                      <div className="absolute top-1/3 right-1/4 w-8 h-8 border-2 border-green-400 rounded-full animate-pulse"></div>
-                      
-                      {/* Face detection frame */}
-                      <div className="absolute top-1/4 left-1/4 w-1/2 h-1/2 border-2 border-blue-400 rounded-lg"></div>
+                      {/* Full face detection frame */}
+                      <div className="absolute top-1/6 left-1/4 w-1/2 h-2/3 border-4 border-green-400 rounded-xl animate-pulse">
+                        <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-green-400 text-white px-2 py-1 rounded text-xs font-semibold">
+                          Face Detection Zone
+                        </div>
+                      </div>
                     </div>
                     
                     {isScanning && (
@@ -234,8 +238,8 @@ const FaceRecognition = ({ onAttendanceRecord, students, onUpdateStudentLastSeen
                 disabled={isScanning || cameraError}
                 className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-4 rounded-2xl text-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Eye className="w-6 h-6 mr-2" />
-                {isScanning ? 'Scanning Eyes...' : 'Scan for Attendance'}
+                <Scan className="w-6 h-6 mr-2" />
+                {isScanning ? 'Scanning Face...' : 'Scan Face for Attendance'}
               </Button>
             </div>
 
@@ -246,9 +250,9 @@ const FaceRecognition = ({ onAttendanceRecord, students, onUpdateStudentLastSeen
               ) : (
                 <div className="text-center text-gray-500">
                   <div className="w-32 h-32 bg-gray-100 rounded-full flex items-center justify-center mb-4 mx-auto">
-                    <Eye className="w-16 h-16 text-gray-400" />
+                    <Scan className="w-16 h-16 text-gray-400" />
                   </div>
-                  <p>Eye scan result will appear here</p>
+                  <p>Face scan result will appear here</p>
                   <p className="text-sm text-gray-400 mt-2">Ensure good lighting and clear image</p>
                 </div>
               )}
